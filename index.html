@@ -2,27 +2,40 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>辦公室打卡 App</title>
   
+  <script>
+    window.addEventListener('error', function(event) {
+      const root = document.getElementById('root');
+      if (root) {
+        root.innerHTML = '<div style="color: red; background: #fee2e2; padding: 20px; margin: 20px; border-radius: 10px; font-family: monospace;"><b>系統崩潰了：</b><br><br>' + event.message + '<br><br>請把這段紅字截圖或貼給我！</div>';
+      }
+    });
+  </script>
+
   <script src="https://cdn.tailwindcss.com"></script>
   
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
   
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.23.6/babel.min.js"></script>
 </head>
 <body class="bg-gray-50">
-  <div id="root"></div>
+  
+  <div id="root">
+    <div style="text-align: center; margin-top: 30vh; color: #888; font-family: sans-serif;">
+      <h2 style="font-size: 1.5rem; margin-bottom: 10px;">系統載入中...</h2>
+      <p>如果畫面一直卡在這裡，代表瀏覽器可能不支援，請截圖給我看！</p>
+    </div>
+  </div>
 
-  <script type="text/babel">
+  <script type="text/babel" data-presets="env,react">
     const { useState, useEffect } = React;
 
-    // ==================== Google 表單設定 ====================
     const GOOGLE_FORM_ID = '1FAIpQLSeSZI_SRvr8SGVWkiqegPiVUkIcMX1g1CiUnTiL_Qq7VeazkQ'; 
     const ENTRY_DATE_ID = 'entry.86024765'; 
     const ENTRY_ACTION_ID = 'entry.636253871'; 
-    // =========================================================
 
     const toLocalDateStr = (d) => {
       return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().split('T')[0];
@@ -136,7 +149,7 @@
           >
             <span className={`text-[10px] font-medium ${isToday ? 'text-blue-500' : 'text-gray-400'}`}>{label}</span>
             <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${dotStyle}`}>
-              {isToday && !isLogged && <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" /> }
+              {isToday && !isLogged && <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div> }
               {isLogged && <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
             </div>
           </div>
@@ -202,7 +215,9 @@
       );
     }
 
-    const root = ReactDOM.createRoot(document.getElementById('root'));
+    // 確保程式碼在載入完成後才執行
+    const rootElement = document.getElementById('root');
+    const root = ReactDOM.createRoot(rootElement);
     root.render(<OfficeTracker />);
   </script>
 </body>
