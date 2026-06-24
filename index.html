@@ -9,24 +9,26 @@
     window.addEventListener('error', function(event) {
       const root = document.getElementById('root');
       if (root) {
-        root.innerHTML = '<div style="color: red; background: #fee2e2; padding: 20px; margin: 20px; border-radius: 10px; font-family: monospace;"><b>系統崩潰了：</b><br><br>' + event.message + '<br><br>請把這段紅字截圖或貼給我！</div>';
+        root.innerHTML = '<div style="color: red; background: #fee2e2; padding: 20px; margin: 20px; border-radius: 10px; font-family: monospace;"><b>系統崩潰了：</b><br><br>' + event.message + '</div>';
       }
     });
   </script>
 
   <script src="https://cdn.tailwindcss.com"></script>
   
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
   
   <script src="https://unpkg.com/@babel/standalone@7.23.6/babel.min.js"></script>
 </head>
-<body class="bg-gray-50">
+
+<body class="bg-gradient-to-br from-indigo-200 via-purple-100 to-pink-200 min-h-screen text-gray-800">
   
   <div id="root">
     <div style="text-align: center; margin-top: 30vh; color: #888; font-family: sans-serif;">
       <h2 style="font-size: 1.5rem; margin-bottom: 10px;">系統載入中...</h2>
-      <p>如果畫面一直卡在這裡，代表瀏覽器可能不支援，請截圖給我看！</p>
     </div>
   </div>
 
@@ -37,10 +39,7 @@
     const ENTRY_DATE_ID = 'entry.86024765'; 
     const ENTRY_ACTION_ID = 'entry.636253871'; 
 
-    const toLocalDateStr = (d) => {
-      return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().split('T')[0];
-    };
-
+    const toLocalDateStr = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().split('T')[0];
     const getTodayStr = () => toLocalDateStr(new Date());
 
     const getWeekDates = () => {
@@ -124,8 +123,21 @@
           const isCurrentlyLogged = newState[targetDateStr];
           const actionText = isCurrentlyLogged ? '撤銷打卡' : '紀錄進辦公室';
           
-          if (isCurrentlyLogged) delete newState[targetDateStr];
-          else newState[targetDateStr] = true;
+          if (isCurrentlyLogged) {
+            delete newState[targetDateStr];
+          } else {
+            newState[targetDateStr] = true;
+            
+            // ✨ 觸發灑花特效
+            if (typeof confetti === 'function') {
+              confetti({
+                particleCount: 60,
+                spread: 70,
+                origin: { y: 0.8 },
+                colors: ['#a78bfa', '#60a5fa', '#f472b6', '#34d399']
+              });
+            }
+          }
           
           logToGoogleForm(actionText, targetDateStr);
           return newState;
@@ -137,58 +149,70 @@
         const isLogged = attendance[dateStr];
         const isToday = dateStr === todayStr;
 
-        let dotStyle = "border-2 border-gray-200 bg-transparent"; 
-        if (isLogged) dotStyle = "bg-green-400 shadow-sm border-2 border-green-400"; 
-        else if (isPastOrToday) dotStyle = "bg-gray-100 border-2 border-gray-200"; 
+        // ✨ 玻璃質感的圓點樣式
+        let dotStyle = "border border-white/50 bg-white/20"; 
+        if (isLogged) dotStyle = "bg-green-400/90 shadow-[0_0_15px_rgba(74,222,128,0.5)] border border-green-300"; 
+        else if (isPastOrToday) dotStyle = "bg-white/40 border border-white/60 shadow-sm"; 
 
         return (
           <div 
             key={dateStr} 
             onClick={() => isPastOrToday && handleToggleDate(dateStr)}
-            className={`flex flex-col items-center space-y-1.5 ${isPastOrToday ? 'cursor-pointer hover:scale-110 transition-transform' : 'opacity-50'}`}
+            // 加入 active:scale-75 帶來 Q 彈手感
+            className={`flex flex-col items-center space-y-1.5 ${isPastOrToday ? 'cursor-pointer hover:scale-110 active:scale-75 transition-transform duration-200' : 'opacity-40'}`}
           >
-            <span className={`text-[10px] font-medium ${isToday ? 'text-blue-500' : 'text-gray-400'}`}>{label}</span>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${dotStyle}`}>
-              {isToday && !isLogged && <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div> }
-              {isLogged && <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+            <span className={`text-[10px] font-bold ${isToday ? 'text-indigo-600' : 'text-slate-500'}`}>{label}</span>
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 backdrop-blur-sm ${dotStyle}`}>
+              {isToday && !isLogged && <div className="w-2 h-2 bg-indigo-500 rounded-full animate-ping absolute"></div> }
+              {isToday && !isLogged && <div className="w-2 h-2 bg-indigo-500 rounded-full relative"></div> }
+              {isLogged && <svg className="w-4 h-4 text-white drop-shadow-md" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
             </div>
           </div>
         );
       };
 
       return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6 font-sans">
-          <div className="bg-white rounded-[2rem] shadow-xl p-8 w-full max-w-md border border-gray-100">
+        <div className="min-h-screen flex items-center justify-center p-6 font-sans">
+          
+          {/* ✨ 核心玻璃面板 (Glassmorphism) */}
+          <div className="bg-white/40 backdrop-blur-xl rounded-[2.5rem] shadow-[0_8px_32px_0_rgba(31,38,135,0.1)] p-8 w-full max-w-md border border-white/60">
+            
             <div className="mb-8 text-center relative">
-              <h1 className="text-2xl font-bold text-gray-800 tracking-wide mb-1">本月辦公室進度</h1>
-              <p className="text-gray-400 text-sm font-medium">Policy: 月平均 30% 工作日</p>
+              <h1 className="text-2xl font-extrabold text-slate-800 tracking-wide mb-1 drop-shadow-sm">本月辦公室進度</h1>
+              <p className="text-slate-600 text-sm font-semibold">Policy: 月平均 30% 工作日</p>
             </div>
 
             <div className="mb-8">
-              <div className="flex justify-between text-sm mb-2 font-medium">
-                <span className="text-gray-600">本月已進：{officeDaysThisMonth} 天</span>
-                <span className="text-gray-600">目標：{monthlyTarget} 天</span>
+              <div className="flex justify-between text-sm mb-2 font-bold text-slate-700">
+                <span>本月已進：{officeDaysThisMonth} 天</span>
+                <span>目標：{monthlyTarget} 天</span>
               </div>
-              <div className="w-full bg-gray-100 rounded-full h-3.5 relative overflow-hidden shadow-inner">
+              
+              {/* ✨ 玻璃質感的進度條底框 */}
+              <div className="w-full bg-white/50 backdrop-blur-sm rounded-full h-4 relative overflow-hidden shadow-inner border border-white/60">
                 <div 
-                  className={`h-full rounded-full transition-all duration-700 ease-out ${isGoalReached ? 'bg-green-400 shadow-[0_0_10px_rgba(74,222,128,0.5)]' : 'bg-blue-500'}`}
+                  className={`h-full rounded-full transition-all duration-1000 ease-out relative ${isGoalReached ? 'bg-gradient-to-r from-green-300 to-emerald-400' : 'bg-gradient-to-r from-indigo-400 to-purple-400'}`}
                   style={{ width: `${progressPercentage}%` }}
-                ></div>
+                >
+                  {/* 進度條反光特效 */}
+                  <div className="absolute top-0 left-0 right-0 bottom-0 bg-white/20 w-full h-1/2 rounded-t-full"></div>
+                </div>
               </div>
-              {isGoalReached && <p className="text-green-500 text-xs mt-3 text-center font-semibold animate-pulse">🎉 本月已達標！</p>}
+              {isGoalReached && <p className="text-emerald-600 text-xs mt-3 text-center font-bold animate-pulse">🎉 本月已達標！</p>}
             </div>
 
-            <div className="mb-8 bg-gray-50/50 rounded-3xl p-4 border border-gray-100">
-              <div className="text-center mb-3">
-                <span className="text-[10px] text-gray-400 font-medium">💡 點擊圓點可直接補登或撤銷</span>
+            {/* ✨ 半透明內嵌區塊 */}
+            <div className="mb-8 bg-white/30 backdrop-blur-md rounded-3xl p-5 border border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.6)]">
+              <div className="text-center mb-4">
+                <span className="text-[10px] text-slate-500 font-bold tracking-wider">💡 點擊圓點可直接補登或撤銷</span>
               </div>
               <div className="flex justify-between items-center px-1">
                 {weekDates.map((date, i) => renderDayDot(date, dayNames[i]))}
               </div>
               <div className={`transition-all duration-500 overflow-hidden ease-in-out ${isCalendarExpanded ? 'max-h-96 opacity-100 mt-6' : 'max-h-0 opacity-0'}`}>
-                <div className="pt-4 border-t border-gray-200/60">
-                  <p className="text-xs text-gray-400 mb-3 font-medium text-center">本月全覽</p>
-                  <div className="grid grid-cols-7 gap-2">
+                <div className="pt-5 border-t border-white/50">
+                  <p className="text-xs text-slate-500 mb-3 font-bold text-center tracking-widest">本月全覽</p>
+                  <div className="grid grid-cols-7 gap-y-3 gap-x-1">
                     {monthDates.map(date => {
                       const d = new Date(date);
                       return renderDayDot(date, d.getDate());
@@ -196,16 +220,21 @@
                   </div>
                 </div>
               </div>
-              <button onClick={() => setIsCalendarExpanded(!isCalendarExpanded)} className="w-full mt-4 text-xs font-medium text-gray-400 hover:text-gray-600 flex justify-center items-center space-x-1">
+              <button onClick={() => setIsCalendarExpanded(!isCalendarExpanded)} className="w-full mt-5 text-xs font-bold text-slate-500 hover:text-slate-800 flex justify-center items-center space-x-1 transition-colors">
                 <span>{isCalendarExpanded ? '收合月曆' : '展開本月'}</span>
-                <svg className={`w-3 h-3 transition-transform duration-300 ${isCalendarExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                <svg className={`w-3 h-3 transition-transform duration-300 ${isCalendarExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" /></svg>
               </button>
             </div>
 
             <div className="space-y-4">
               <button 
                 onClick={() => handleToggleDate(todayStr)}
-                className={`w-full font-semibold py-3.5 rounded-2xl shadow-md transition-all active:scale-95 flex items-center justify-center space-x-2 ${isLoggedToday ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' : 'bg-black text-white hover:bg-gray-800'}`}
+                // ✨ 立體果凍按鈕
+                className={`w-full font-bold py-4 rounded-2xl shadow-lg transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center space-x-2 border ${
+                  isLoggedToday 
+                    ? 'bg-white/50 text-slate-700 border-white/60 hover:bg-white/70' 
+                    : 'bg-slate-800/90 text-white border-slate-700 hover:bg-slate-900 backdrop-blur-md'
+                }`}
               >
                 <span>{isLoggedToday ? '撤銷今天打卡' : '📍 紀錄今天進辦公室'}</span>
               </button>
@@ -215,7 +244,6 @@
       );
     }
 
-    // 確保程式碼在載入完成後才執行
     const rootElement = document.getElementById('root');
     const root = ReactDOM.createRoot(rootElement);
     root.render(<OfficeTracker />);
