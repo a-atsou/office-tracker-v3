@@ -138,11 +138,10 @@
           } else {
             newState[targetDateStr] = true;
             
-            // 效能優化：延遲 50 毫秒噴發紙花，讓畫面變色與紙花運算錯開
             setTimeout(() => {
               if (typeof confetti === 'function') {
                 confetti({
-                  particleCount: 50, // 微調數量減輕負擔
+                  particleCount: 50, 
                   spread: 70,
                   origin: { y: 0.8 },
                   colors: ['#01a982', '#fbbf24', '#ffffff'],
@@ -170,11 +169,9 @@
           <div 
             key={dateStr} 
             onClick={() => isPastOrToday && handleToggleDate(dateStr)}
-            // 效能優化：把 transition-all 改成 transition-transform 並加上 transform-gpu 加速
             className={`flex flex-col items-center space-y-1.5 ${isPastOrToday ? 'cursor-pointer hover:scale-110 active:scale-75 transition-transform duration-200 transform-gpu' : 'opacity-30'}`}
           >
             <span className={`text-[10px] font-bold tracking-wider ${isToday ? 'text-brand drop-shadow-[0_0_8px_rgba(1,169,130,0.8)]' : 'text-gray-400'}`}>{label}</span>
-            {/* 效能優化：只針對顏色做漸變 transition-colors，不計算昂貴的陰影漸變 */}
             <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors duration-300 backdrop-blur-md ${dotStyle}`}>
               {isToday && !isLogged && <div className="w-2 h-2 bg-brand rounded-full animate-ping absolute shadow-[0_0_10px_rgba(1,169,130,1)]"></div> }
               {isToday && !isLogged && <div className="w-2 h-2 bg-brand rounded-full relative"></div> }
@@ -201,7 +198,6 @@
               </div>
               
               <div className="w-full bg-black/50 backdrop-blur-sm rounded-full h-3 relative overflow-hidden border border-white/5 shadow-inner transform-gpu">
-                {/* 效能優化：針對進度條寬度變更使用 gpu 加速 */}
                 <div 
                   className={`h-full rounded-full transition-[width,background-color] duration-1000 ease-out relative transform-gpu ${isGoalReached ? 'bg-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.6)]' : 'bg-brand shadow-[0_0_15px_rgba(1,169,130,0.6)]'}`}
                   style={{ width: `${progressPercentage}%` }}
@@ -221,8 +217,10 @@
                 {weekDates.map((date, i) => renderDayDot(date, dayNames[i]))}
               </div>
               
-              <div className={`transition-all duration-500 overflow-hidden ease-in-out transform-gpu ${isCalendarExpanded ? 'max-h-96 opacity-100 mt-6' : 'max-h-0 opacity-0'}`}>
-                <div className="pt-6 border-t border-white/10">
+              {/* 🚀 效能優化核心：縮短時間為 300ms，拿掉 mt-6，強制 GPU 加速 */}
+              <div className={`transition-all duration-300 ease-out transform-gpu overflow-hidden ${isCalendarExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                {/* 將外距塞入內部，避免展開時影響外部版面重繪 */}
+                <div className="pt-6 mt-6 border-t border-white/10">
                   <p className="text-[10px] text-brand mb-4 font-bold text-center tracking-widest uppercase">本月全覽</p>
                   <div className="grid grid-cols-7 gap-y-4 gap-x-1">
                     {monthDates.map(date => {
@@ -235,14 +233,13 @@
               
               <button onClick={() => setIsCalendarExpanded(!isCalendarExpanded)} className="w-full mt-6 text-xs font-bold text-gray-500 hover:text-white flex justify-center items-center space-x-1 transition-colors">
                 <span>{isCalendarExpanded ? '收合月曆' : '展開本月'}</span>
-                <svg className={`w-3 h-3 transition-transform duration-300 ${isCalendarExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" /></svg>
+                <svg className={`w-3 h-3 transition-transform duration-300 transform-gpu ${isCalendarExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" /></svg>
               </button>
             </div>
 
             <div className="space-y-4">
               <button 
                 onClick={() => handleToggleDate(todayStr)}
-                // 效能優化：拿掉昂貴的 transition-all，換成輕量的 transform 和色彩漸變，並加上 transform-gpu
                 className={`w-full font-bold py-4 rounded-2xl transition-[transform,background-color,border-color] duration-200 hover:scale-[1.02] active:scale-95 flex items-center justify-center space-x-2 border backdrop-blur-md transform-gpu ${
                   isLoggedToday 
                     ? 'bg-white/5 text-gray-400 border-white/10 hover:bg-white/10' 
