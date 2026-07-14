@@ -69,6 +69,13 @@
       border: 1px solid rgba(255,255,255,0.5);
       box-shadow: inset 0 1px 1px rgba(255,255,255,0.9), inset 0 -6px 10px -6px rgba(255,255,255,0.25), 0 3px 10px rgba(30,41,59,0.08);
     }
+    /* Lightweight glass look with NO backdrop-filter — used for the many small day-dots.
+       Blurring 30+ elements at once during the accordion animation was the main cause of jank. */
+    .glass-chip {
+      background: linear-gradient(135deg, rgba(255,255,255,0.65) 0%, rgba(255,255,255,0.28) 100%);
+      border: 1px solid rgba(255,255,255,0.6);
+      box-shadow: inset 0 1px 1px rgba(255,255,255,0.9), inset 0 -4px 8px -4px rgba(255,255,255,0.3), 0 2px 6px rgba(30,41,59,0.06);
+    }
     .liquid-solid {
       box-shadow: inset 0 1px 1px rgba(255,255,255,0.7), inset 0 -3px 8px rgba(0,0,0,0.12), 0 6px 18px -4px var(--glow, rgba(1,169,130,0.5));
       border: 1px solid rgba(255,255,255,0.45);
@@ -216,15 +223,15 @@
         const isLogged = attendance[dateStr];
         const isToday = dateStr === todayStr;
 
-        let dotClass = "liquid-glass-sm";
+        let dotClass = "glass-chip";
         let dotStyle = {};
         if (isLogged) {
           dotClass = "liquid-solid";
           dotStyle = { background: 'linear-gradient(135deg, #14caa0, #01a982 60%, #018a6c)', '--glow': 'rgba(1,169,130,0.55)' };
         } else if (isPastOrToday) {
-          dotClass = "liquid-glass-sm hover:brightness-110";
+          dotClass = "glass-chip hover:brightness-110";
         } else {
-          dotClass = "liquid-glass-sm opacity-50";
+          dotClass = "glass-chip opacity-50";
         }
 
         return (
@@ -277,17 +284,19 @@
                 {weekDates.map((date, i) => renderDayDot(date, dayNames[i]))}
               </div>
               
-              <div className={`transition-all duration-300 ease-out transform-gpu overflow-hidden ${isCalendarExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
-                <div className="pt-6 mt-6 border-t border-white/50">
-                  <p className="text-[10px] text-brand mb-4 font-bold text-center tracking-widest uppercase">本月全覽</p>
-                  <div className="grid grid-cols-7 gap-y-4 gap-x-1">
-                    {monthDates.map((date, idx) => {
-                      // 🗓️ 處理月初的空白格子，確保 1 號對齊正確的星期
-                      if (!date) return <div key={`empty-${idx}`} className="w-8 h-8 mx-auto" />;
-                      
-                      const d = new Date(date);
-                      return renderDayDot(date, d.getDate());
-                    })}
+              <div className={`grid transition-[grid-template-rows] duration-300 ease-out ${isCalendarExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+                <div className="overflow-hidden min-h-0">
+                  <div className="pt-6 mt-6 border-t border-white/50">
+                    <p className="text-[10px] text-brand mb-4 font-bold text-center tracking-widest uppercase">本月全覽</p>
+                    <div className="grid grid-cols-7 gap-y-4 gap-x-1">
+                      {monthDates.map((date, idx) => {
+                        // 🗓️ 處理月初的空白格子，確保 1 號對齊正確的星期
+                        if (!date) return <div key={`empty-${idx}`} className="w-8 h-8 mx-auto" />;
+                        
+                        const d = new Date(date);
+                        return renderDayDot(date, d.getDate());
+                      })}
+                    </div>
                   </div>
                 </div>
               </div>
