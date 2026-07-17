@@ -37,6 +37,16 @@
   </script>
 
   <style>
+    /* ---- Force GPU compositing layer (avoids CPU rasterization jank on mobile) ---- */
+    .gpu-boost {
+      transform: translateZ(0);
+      -webkit-transform: translateZ(0);
+      will-change: transform;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      isolation: isolate;
+    }
+
     /* ---- True Liquid Glass material ---- */
     .liquid-glass {
       position: relative;
@@ -252,7 +262,7 @@
 
       return (
         <div className="w-full max-w-md">
-          <div className="liquid-glass rounded-[2.75rem] p-8 relative">
+          <div className="liquid-glass gpu-boost rounded-[2.75rem] p-8 relative">
 
             <div className="mb-8 text-center relative">
               <h1 className="text-2xl font-extrabold text-slate-800 tracking-wider mb-1 drop-shadow-[0_1px_0_rgba(255,255,255,0.6)]">本月辦公室進度</h1>
@@ -275,7 +285,7 @@
               {isGoalReached && <p className="text-amber-500 text-xs mt-3 text-center font-bold tracking-wider animate-pulse">🎉 本月已達標！</p>}
             </div>
 
-            <div className="mb-8 liquid-glass-sm rounded-[2rem] p-5 transform-gpu">
+            <div className="mb-8 liquid-glass-sm gpu-boost rounded-[2rem] p-5 transform-gpu">
               <div className="text-center mb-5">
                 <span className="text-[10px] text-slate-500 font-bold tracking-widest uppercase">💡 點擊圓點可直接補登或撤銷</span>
               </div>
@@ -284,7 +294,7 @@
                 {weekDates.map((date, i) => renderDayDot(date, dayNames[i]))}
               </div>
               
-              <div className={`grid transition-[grid-template-rows] duration-300 ease-out ${isCalendarExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+              <div className={`grid gpu-boost transition-[grid-template-rows] duration-300 ease-out ${isCalendarExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`} style={{ willChange: 'grid-template-rows' }}>
                 <div className="overflow-hidden min-h-0">
                   <div className="pt-6 mt-6 border-t border-white/50">
                     <p className="text-[10px] text-brand mb-4 font-bold text-center tracking-widest uppercase">本月全覽</p>
